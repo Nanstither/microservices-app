@@ -145,6 +145,8 @@ pipeline {
                     sh '''
                         docker compose down || true
                         docker compose up -d
+			sleep 10
+	                curl -sf http://localhost:8085/health || echo "Warning: health check failed"
                     '''
                 }
             }

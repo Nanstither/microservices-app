@@ -1,0 +1,44 @@
+#version: '3.8'
+
+services:
+  gateway:
+    build: ./gateway
+    ports:
+      - "80:80"
+    depends_on:
+      - user-service
+      - order-service
+    networks:
+      - microservices-net
+    restart: unless-stopped
+
+  user-service:
+    build: ./user-service
+    expose:
+      - "5000"
+    networks:
+      - microservices-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  order-service:
+    build: ./order-service
+    expose:
+      - "3000"
+    networks:
+      - microservices-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  microservices-net:
+    driver: bridge
+

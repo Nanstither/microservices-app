@@ -98,41 +98,47 @@ pipeline {
 	    }
 	}
 
-        stage('Push Images') {
-            parallel {
-                stage('Push User Service') {
-                    steps {
-                        script {
-                            docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
-                                docker.image("${DOCKER_HUB_USER}/user-service:${BUILD_NUMBER}").push()
-                                docker.image("${DOCKER_HUB_USER}/user-service:latest").push()
-                            }
-                        }
-                    }
-                }
-                stage('Push Order Service') {
-                    steps {
-                        script {
-                            docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
-                                docker.image("${DOCKER_HUB_USER}/order-service:${BUILD_NUMBER}").push()
-                                docker.image("${DOCKER_HUB_USER}/order-service:latest").push()
-                            }
-                        }
-                    }
-                }
-                stage('Push Gateway') {
-                    steps {
-                        script {
-                            docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
-                                docker.image("${DOCKER_HUB_USER}/gateway:${BUILD_NUMBER}").push()
-                                docker.image("${DOCKER_HUB_USER}/gateway:latest").push()
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        
+	stage('Push Images') {
+	    parallel {
+	        stage('Push User Service') {
+	            steps {
+	                script {
+	                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
+	                        def image = docker.image("${DOCKER_HUB_USER}/user-service:${BUILD_NUMBER}")
+	                        image.push()
+	                        // Создаём тег latest и пушим его
+	                        sh "docker tag ${DOCKER_HUB_USER}/user-service:${BUILD_NUMBER} ${DOCKER_HUB_USER}/user-service:latest"
+	                        docker.image("${DOCKER_HUB_USER}/user-service:latest").push()
+	                    }
+	                }
+	            }
+	        }
+	        stage('Push Order Service') {
+	            steps {
+	                script {
+	                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
+	                        def image = docker.image("${DOCKER_HUB_USER}/order-service:${BUILD_NUMBER}")
+	                        image.push()
+	                        sh "docker tag ${DOCKER_HUB_USER}/order-service:${BUILD_NUMBER} ${DOCKER_HUB_USER}/order-service:latest"
+	                        docker.image("${DOCKER_HUB_USER}/order-service:latest").push()
+	                    }
+	                }
+	            }
+	        }
+	        stage('Push Gateway') {
+	            steps {
+	                script {
+	                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
+	                        def image = docker.image("${DOCKER_HUB_USER}/gateway:${BUILD_NUMBER}")
+	                        image.push()
+	                        sh "docker tag ${DOCKER_HUB_USER}/gateway:${BUILD_NUMBER} ${DOCKER_HUB_USER}/gateway:latest"
+	                        docker.image("${DOCKER_HUB_USER}/gateway:latest").push()
+	                    }
+	                }
+	            }
+	        }
+	    }
+	}        
         stage('Deploy') {
             steps {
                 script {

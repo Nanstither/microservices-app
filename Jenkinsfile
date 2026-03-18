@@ -2,14 +2,14 @@ pipeline {
     agent any
     
     environment {
-        DOCKER_HUB_USER = 'ВАШ_LOGIN_DOCKER_HUB'
+        DOCKER_HUB_USER = '3meenosez'
         DOCKER_CREDENTIALS_ID = 'docker-hub-credentials'
     }
     
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/ВАШ_USER/microservices-app.git'
+                git branch: 'master', url: 'https://github.com/Nanstither/microservices-app.git'
             }
         }
         
@@ -107,8 +107,8 @@ pipeline {
             steps {
                 script {
                     sh '''
-                        docker-compose down || true
-                        docker-compose up -d
+                        docker compose down || true
+                        docker compose up -d
                     '''
                 }
             }
@@ -121,7 +121,7 @@ pipeline {
         }
         failure {
             echo 'Ошибка в одном из сервисов!'
-            sh 'docker-compose down'
+            sh 'docker compose down'
         }
     }
 }

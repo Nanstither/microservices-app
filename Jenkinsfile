@@ -45,23 +45,26 @@ pipeline {
 	            steps {
 	                script {
 	                    sh '''
-	                        # Запускаем контейнер с пробросом порта
+	                        # 1. Принудительно удаляем старые контейнеры (если есть)
+	                        docker rm -f test-user || true
+	                        
+	                        # 2. Запускаем новый контейнер с пробросом порта
 	                        docker run -d -p 5000:5000 --name test-user ${DOCKER_HUB_USER}/user-service:${BUILD_NUMBER}
 	                        
-	                        # Ждём 15 секунд и делаем 3 попытки с интервалом
+	                        # 3. Ждём и проверяем здоровье (3 попытки по 5 секунд)
 	                        for i in 1 2 3; do
 	                            sleep 5
 	                            if curl -sf http://localhost:5000/health; then
 	                                echo "✓ User service is healthy"
-	                                docker stop test-user && docker rm test-user
+	                                docker rm -f test-user
 	                                exit 0
 	                            fi
 	                            echo "⏳ Attempt $i failed, retrying..."
 	                        done
 	                        
-	                        # Если все попытки провалились
+	                        # 4. Если все попытки провалились — показываем логи и ошибка
 	                        docker logs test-user
-	                        docker stop test-user && docker rm test-user
+	                        docker rm -f test-user
 	                        exit 1
 	                    '''
 	                }
@@ -71,27 +74,30 @@ pipeline {
 	            steps {
 	                script {
 	                    sh '''
+	                        docker rm -f test-order || true
+	                        
 	                        docker run -d -p 3000:3000 --name test-order ${DOCKER_HUB_USER}/order-service:${BUILD_NUMBER}
 	                        
 	                        for i in 1 2 3; do
 	                            sleep 5
 	                            if curl -sf http://localhost:3000/health; then
 	                                echo "✓ Order service is healthy"
-	                                docker stop test-order && docker rm test-order
+	                                docker rm -f test-order
 	                                exit 0
 	                            fi
 	                            echo "⏳ Attempt $i failed, retrying..."
 	                        done
 	                        
 	                        docker logs test-order
-	                        docker stop test-order && docker rm test-order
+	                        docker rm -f test-order
 	                        exit 1
 	                    '''
 	                }
 	            }
 	        }
 	    }
-	}        
+	}
+
         stage('Push Images') {
             parallel {
                 stage('Push User Service') {
